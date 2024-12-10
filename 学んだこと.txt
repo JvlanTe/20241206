@@ -1,0 +1,2 @@
+1. canvas を使うことで動的に描画ができる
+2. HTML の要素を JS で取得するには documetn.getElementById を使用する

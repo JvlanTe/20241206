@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background: #888;
+        }
+
+        #container {
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body onload="init()">
+    <!--「onload="init()"」は html を読み込んだ際に一番最初に実行する処理（=初期処理）となり、JS 側で記述します。 -->
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        <!-- canvas とは簡単にいうと「JS を使うことで動的にお絵描きできるようになる」 -->
+    </div>
+    <script src="{{url_for('static',filename='js/Tet.js')}}"></script>
+</body>
+
+</html>
