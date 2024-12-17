@@ -1,3 +1,6 @@
+const DROP_SPEED = 300;
+// 落下スピード
+
 const BLOCK_SIZE = 30;
 // 1ブロックの大きさ
 
@@ -80,6 +83,9 @@ let TETRO_TYPES = [
 ];
 // letはJavaScriptで宣言できるローカル変数
 
+const tetColors = ['#6CF', '#F92', '#66F', '#C5C', '#FD2', '#F44', '#5B5'];
+
+
 let tetroTypesIndex = Math.floor(Math.random() * 7);
 // TETRO_TYPESのインデックス番号をランダム取得
 
@@ -97,6 +103,10 @@ let tetroMinoDistanceY = 0;
 const SCREEN =[];
 // 画面本体
 // 画面本体の描画をするうえで使う空の配列「SCREEN」を用意
+
+let timerId = NaN;
+
+let isGameOver = false;
 
 const drawPlayScreen = () => {
 // テトリスプレイ画面描画処理 = () =>{}; とは何？
@@ -129,11 +139,22 @@ const drawPlayScreen = () => {
       }
     }
   }
+  
   // テトリミノを描画する
   // 1度目の for ループ処理 for (let y = 0; y < TET_SIZE; y++) では16 マス正方形の Y 軸方向、
   // 2度目の for ループ for (let x = 0; x < TET_SIZE; x++) では X 軸方向を見ています。
   //  if (tet[y][x]) では該当するマスに 1 がある時に内部処理が走るようになっています。
   // Zミノでいうと、 (0-0) = tet[0][2] の値は 0 なので色付けはしない。（2－1）＝ tet[2][1]の値は 1 なので色付けが行われます。
+
+  if (isGameOver) {
+    const GAME_OVER_MESSAGE = 'GAME OVER';
+    CANVAS_2D.font = "40px 'Meiryo UI'";
+    const width = CANVAS_2D.measureText(GAME_OVER_MESSAGE).width;
+    const x = CANVAS_WIDTH / 2 - width / 2;
+    const y = CANVAS_HEIGHT / 2 - 20;
+    CANVAS_2D.fillStyle = 'white';
+    CANVAS_2D.fillText(GAME_OVER_MESSAGE, x, y);
+  }
 };
 
 const drawBlock = (x, y) => {
@@ -148,10 +169,10 @@ const drawBlock = (x, y) => {
   CANVAS_2D.strokeRect(drawX, drawY, BLOCK_SIZE, BLOCK_SIZE);
 };
 
-const canMove = (moveX, moveY) => {
+const canMove = (moveX, moveY, newTet = tetroMino) => {
   for (let y = 0; y < TET_SIZE; y++) {
     for (let x = 0; x < TET_SIZE; x++) {
-      if (tetroMino[y][x]) {
+      if (newTet[y][x]) {
         // 現在のテトリミノの位置（tetroMinoDistanceX + x）に移動分を加える（＝移動後の座標）
         let nextX = tetroMinoDistanceX + x + moveX;
         let nextY = tetroMinoDistanceY + y + moveY;
@@ -162,7 +183,8 @@ const canMove = (moveX, moveY) => {
           nextX < 0 ||
           nextY >= PLAY_SCREEN_HEIGHT ||
           nextX >= PLAY_SCREEN_WIDTH ||
-          SCREEN[nextY][nextX]) {
+          SCREEN[nextY][nextX]
+          ) {
           return false;
           // 移動後の座標にブロックまたは範囲外の場合falseを返す
         }
@@ -172,15 +194,37 @@ const canMove = (moveX, moveY) => {
   return true;
 };
 
+const createRightRotateTet = () => {
+//回転後の新しいテトリミノ用配列
+  let newTet = [];
+  for (let y = 0; y < TET_SIZE; y++) {
+    newTet[y] = [];
+    for (let x = 0; x < TET_SIZE; x++) {
+      newTet[y][x] = tetroMino[TET_SIZE - 1 - x][y];
+    }
+  }
+  return newTet;
+};
+
+const createLeftRotateTet = () => {
+  //回転後の新しいテトリミノ用配列
+  let newTet = [];
+  for (let y = 0; y < TET_SIZE; y++) {
+    newTet[y] = [];
+    for (let x = 0; x < TET_SIZE; x++) {
+      newTet[y][x] = tetroMino[x][TET_SIZE - 1 - y];
+    }
+  }
+  return newTet;
+};
+
 document.onkeydown = (e) => {
 // 引数「e」には押されたキーの情報が格納されます。
+  if (isGameOver) return;
   switch (e.code) {
   // プロパティ「e.code」には押されたキーの ID 値のようなモノが入っている
     case 'ArrowLeft':
       if (canMove(-1, 0)) tetroMinoDistanceX--;
-      break;
-    case 'ArrowUp':
-      if (canMove(0, -1)) tetroMinoDistanceY--;
       break;
     case 'ArrowRight':
       if (canMove(1, 0)) tetroMinoDistanceX++;
@@ -188,13 +232,82 @@ document.onkeydown = (e) => {
     case 'ArrowDown':
       if (canMove(0, 1)) tetroMinoDistanceY++;
       break;
+    case 'ArrowUp':
+      let newRTet = createRightRotateTet();
+      if (canMove(0, 0, newRTet)){
+        tetroMino = newRTet;
+      }
+      break;
+    case 'ControlLeft':
+    let newLTet = createLeftRotateTet();
+    if(canMove(0, 0, newLTet)){
+      tetroMino = newRTet;
+    }
+    break;
   }
   drawPlayScreen();
 };
 
+const fixTet = () => {
+  for (let y = 0; y < TET_SIZE; y++) {
+    for (let x = 0; x < TET_SIZE; x++) {
+      if (tetroMino[y][x]) {
+        SCREEN[tetroMinoDistanceY + y][tetroMinoDistanceX + x] = 1;
+      }
+    }
+  }
+};
+
+const clearLine = () => {
+  // 一列になっている場所をスクリーン上から調べていく
+  for (let y = 0; y < PLAY_SCREEN_HEIGHT; y++) {
+    // 行を消すフラグを立てる
+    let isClearLine = true;
+    // 行に0が入っている（＝そろっていない）かを調べていく
+    for (let x = 0; x < PLAY_SCREEN_WIDTH; x++) {
+      if (SCREEN[y][x] === 0) {
+        isClearLine = false;
+        break;
+      }
+    }
+    if (isClearLine) {
+      // そろった行から上へ向かってforループしていく
+      for (let newY = y; newY > 0; newY--) {
+        for (let newX = 0; newX < PLAY_SCREEN_WIDTH; newX++) {
+          // 一列上の情報をコピーする
+          SCREEN[newY][newX] = SCREEN[newY - 1][newX];
+        }
+      }
+    }
+  }
+};
+
+const dropTet = () => {
+  if (isGameOver) return;
+  if (canMove(0, 1)) {
+    tetroMinoDistanceY++;
+  } else {
+    fixTet();
+    tetroTypesIndex = Math.floor(Math.random() * 7);
+    tetroMino = TETRO_TYPES[tetroTypesIndex];
+    createTetPosition();
+    if (!canMove(0, 0)) {
+      isGameOver = true;
+      clearInterval(timerId);
+    }
+  }
+  drawPlayScreen();
+};
+// 落下処理
+
 const CONTAINER = document.getElementById('container');
 CONTAINER.style.width = CANVAS_WIDTH + 'px';
 // 画面を真ん中にする
+
+const createTetPosition = () => {
+  tetroMinoDistanceX = PLAY_SCREEN_WIDTH / 2 - TET_SIZE / 2;
+  tetroMinoDistanceY = 0;
+}
 
 const init = () => {
   for (let y = 0; y < PLAY_SCREEN_HEIGHT; y++) {
@@ -205,7 +318,8 @@ const init = () => {
   }
 // 初期化処理
 
-  SCREEN[4][6] = 1;
+  createTetPosition();
+  setInterval(dropTet, DROP_SPEED)
   drawPlayScreen();
 };
 
