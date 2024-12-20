@@ -8,5 +8,10 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/gpt")
+def gpt():
+    return render_template("gpt.html")
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=8000, debug=True)

@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #1d1d1d;
+}
+
+#gameContainer {
+    display: flex;
+    justify-content: space-between;
+    /* 横並びにする */
+    align-items: flex-start;
+    padding: 10px;
+}
+
+.side {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+canvas {
+    border: 1px solid black;
+    /* 各キャンバスに枠をつけて見やすく */
+}

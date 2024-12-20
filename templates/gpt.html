@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Game</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
+</head>
+
+<body>
+    <div id="gameContainer">
+        <!-- HOLDエリア -->
+        <div class="side" id="holdArea">
+            <h3>HOLD</h3>
+            <canvas id="holdCanvas" width="120" height="120"></canvas>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div>
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+        </div>
+
+        <!-- NEXTエリア -->
+        <div class="side" id="nextArea">
+            <h3>Next</h3>
+            <canvas id="nextCanvas" width="120" height="120"></canvas>
+        </div>
+    </div>
+
+    <script src="{{url_for('static',filename='js/gpt.js')}}"></script>
+</body>
+
+</html>
